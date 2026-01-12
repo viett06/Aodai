@@ -1,49 +1,114 @@
 package com.viet.aodai.auth.domain.security.impl;
 
+import com.viet.aodai.auth.domain.dto.PendingAuthSession;
+import com.viet.aodai.auth.domain.enumration.AuthStep;
+import com.viet.aodai.auth.domain.enumration.MfaType;
 import com.viet.aodai.auth.domain.security.SessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import javax.sound.midi.MidiFileFormat;
 import java.time.Duration;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class RedisSessionServiceImpl implements SessionService {
-    private final RedisTemplate<String, String> redisTemplate;
-    private static final String SESSION_FREFIX = "auth:session:";
-    private static final Duration SESSION_TTL = Duration.ofMinutes(10);
+
+    private final Map<String, PendingAuthSession> sessions = new ConcurrentHashMap<>();
+
+    private final Map<String, Set<String>> userSessionsIndex = new ConcurrentHashMap<>();
+
     @Override
-    public String createSession(UUID userId) {
+    public String generateSessionToken(UUID userId, String username, String deviceFingerprint) {
         String sessionToken = UUID.randomUUID().toString();
-        String key = SESSION_FREFIX + userId;
-        redisTemplate.opsForValue().set(key,sessionToken,SESSION_TTL);
-        log.debug("Session created for user: {}", userId);
+
+        PendingAuthSession session = PendingAuthSession.builder()
+                .userId(userId)
+                .username(username)
+                .deviceFingerprint(deviceFingerprint)
+                .currentStep(AuthStep.PASSWORD_VERIFY)
+                .createdAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusMinutes(1))
+                .otpSent(false)
+                .build();
+        sessions.put(sessionToken,session);
+
+        // computeIfAbsent always return Set<String>
+        userSessionsIndex.computeIfAbsent(userId.toString(), k -> ConcurrentHashMap.newKeySet()).add(sessionToken);
+
         return sessionToken;
-    }
-
-    @Override
-    public Optional<String> getValidSession(UUID userId) {
-        String key = SESSION_FREFIX +userId;
-        String sessionToken = redisTemplate.opsForValue().get(key);
-        return Optional.ofNullable(sessionToken);
-    }
-
-    @Override
-    public void clearSession(UUID userId) {
-        String key = SESSION_FREFIX + userId;
-        redisTemplate.delete(key);
-        log.debug("Session cleared for user: {}", userId);
-
 
     }
 
+    //get session and validate
     @Override
-    public boolean validateSession(String sessionToken) {
-        return true;
+    public Optional<PendingAuthSession> getSession(String sessionToken) {
+        PendingAuthSession session = sessions.get(sessionToken);
+
+        if (session == null){
+            return Optional.empty();
+        }
+
+        if (session.getExpiresAt().isBefore(LocalDateTime.now())){
+            invalidateSession(sessionToken);
+            return Optional.empty();
+        }
+        return Optional.of(session);
+    }
+
+    @Override
+    public void updateSessionToken(String sessionToken, AuthStep newStep, MfaType mfaType) {
+        PendingAuthSession session = sessions.get(sessionToken);
+        if (session != null){
+            session.setCurrentStep(newStep);
+            if (mfaType != null){
+                session.setSelectedMfaType(mfaType);
+            }
+        }
+
+    }
+
+    // hide otp sended
+    @Override
+    public void markOtpSent(String sessionToken) {
+        PendingAuthSession session = sessions.get(sessionToken);
+        if (session != null) {
+            session.setOtpSent(true);
+        }
+
+    }
+
+    @Override
+    public void invalidateSession(String sessionToken) {
+        PendingAuthSession session = sessions.remove(sessionToken);
+        if (session != null){
+            Set<String> userSessions = userSessionsIndex.get(session.getUserId().toString());
+            if (userSessions != null){
+                userSessions.remove(sessionToken);
+            }
+        }
+    }
+
+    @Override
+    public void invalidateAllUserSessions(UUID userId) {
+        Set<String> userSessions = userSessionsIndex.remove(userId.toString());
+        if (userSessions != null){
+            userSessions.forEach(sessions::remove);
+        }
+
+    }
+
+    // clean periodic
+    @Override
+    public void cleanupExpiredSession() {
+        LocalDateTime now = LocalDateTime.now();
+        sessions.entrySet().removeIf(entry -> entry.getValue().getExpiresAt().isBefore(now));
     }
 }

@@ -1,7 +1,8 @@
 package com.viet.aodai.auth.domain.request;
 
+import com.viet.aodai.auth.domain.enumration.MfaType;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Getter
@@ -9,12 +10,11 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class VerifyMfaRequest {
-
+public class SelectMfaRequest {
     @NotBlank(message = "Session token is required")
     private String sessionToken;
 
-    @NotBlank(message = "OTP code is required")
-    @Pattern(regexp = "^\\d{6}$", message = "OTP must be 6 digits")
-    private String otpCode;
+    @NotNull(message = "MFA type is required")
+    private MfaType mfaType;
 }
+

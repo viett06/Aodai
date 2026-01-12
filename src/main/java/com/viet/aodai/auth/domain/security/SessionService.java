@@ -1,11 +1,18 @@
 package com.viet.aodai.auth.domain.security;
 
+import com.viet.aodai.auth.domain.dto.PendingAuthSession;
+import com.viet.aodai.auth.domain.enumration.AuthStep;
+import com.viet.aodai.auth.domain.enumration.MfaType;
+
 import java.util.Optional;
 import java.util.UUID;
 
 public interface SessionService {
-    String createSession(UUID userId);
-    Optional<String> getValidSession(UUID userId);
-    void clearSession(UUID userId);
-    boolean validateSession(String sessionToken);
+   String generateSessionToken(UUID userId, String username, String deviceFingerprint);
+   Optional<PendingAuthSession> getSession(String sessionToken);
+   void updateSessionToken(String sessionToken, AuthStep newStep, MfaType mfaType);
+   void markOtpSent(String sessionToken);
+   void invalidateSession(String sessionToken);
+   void invalidateAllUserSessions(UUID userId);
+   void cleanupExpiredSession();
 }

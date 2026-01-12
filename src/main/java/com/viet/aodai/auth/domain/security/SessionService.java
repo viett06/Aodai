@@ -1,8 +1,8 @@
 package com.viet.aodai.auth.domain.security;
 
 import com.viet.aodai.auth.domain.dto.PendingAuthSession;
-import com.viet.aodai.auth.domain.enumration.AuthStep;
-import com.viet.aodai.auth.domain.enumration.MfaType;
+import com.viet.aodai.auth.domain.enumeration.AuthStep;
+import com.viet.aodai.auth.domain.enumeration.MfaType;
 
 import java.util.Optional;
 import java.util.UUID;

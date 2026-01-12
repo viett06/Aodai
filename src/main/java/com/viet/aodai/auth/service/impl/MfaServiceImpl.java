@@ -1,7 +1,7 @@
 package com.viet.aodai.auth.service.impl;
 
 import com.viet.aodai.auth.domain.entity.MfaOtp;
-import com.viet.aodai.auth.domain.enumration.MfaType;
+import com.viet.aodai.auth.domain.enumeration.MfaType;
 import com.viet.aodai.auth.repository.MfaOtpRepository;
 import com.viet.aodai.auth.service.MfaService;
 import com.viet.aodai.auth.service.SendOtpServiceCustom;
@@ -9,7 +9,6 @@ import com.viet.aodai.core.common.exception.AuthException;
 import com.viet.aodai.core.config.SecurityConfig;
 import com.viet.aodai.user.domain.entity.User;
 import lombok.RequiredArgsConstructor;
-import org.antlr.v4.runtime.tree.xpath.XPathRuleAnywhereElement;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -77,6 +76,7 @@ public class MfaServiceImpl implements MfaService {
     private void sendOtpToUser(User user, String otp, MfaType mfaType){
         String target = switch (mfaType){
             case EMAIL -> user.getEmail();
+
             case SMS ->  user.getPhoneNumber();
         };
         sendOtpServiceCustom.sendOtp(mfaType,target,otp);

@@ -1,4 +1,4 @@
-package com.viet.aodai.auth.domain.enumration;
+package com.viet.aodai.auth.domain.enumeration;
 
 public enum MfaType {
     EMAIL("emailOtpService"),

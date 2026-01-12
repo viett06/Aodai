@@ -1,8 +1,8 @@
 package com.viet.aodai.auth.service.impl;
 
 import com.viet.aodai.auth.domain.dto.PendingAuthSession;
-import com.viet.aodai.auth.domain.enumration.AuthStep;
-import com.viet.aodai.auth.domain.enumration.MfaType;
+import com.viet.aodai.auth.domain.enumeration.AuthStep;
+import com.viet.aodai.auth.domain.enumeration.MfaType;
 import com.viet.aodai.auth.domain.request.SelectMfaRequest;
 
 import com.viet.aodai.auth.domain.response.AuthResponse;
@@ -67,12 +67,14 @@ public class MfaSelectionStrategy implements AuthStrategy {
 
     @Override
     public boolean supports(AuthStep step) {
-        return false;
+
+        return step == AuthStep.MFA_REQUIRED;
     }
 
     @Override
     public AuthStep getStep() {
-        return null;
+
+        return AuthStep.MFA_REQUIRED;
     }
 
     private void validateMfaType(User user, MfaType mfaType){

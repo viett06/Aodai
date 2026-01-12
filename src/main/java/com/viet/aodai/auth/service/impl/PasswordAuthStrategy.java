@@ -1,21 +1,19 @@
 package com.viet.aodai.auth.service.impl;
 
-import com.viet.aodai.auth.domain.enumration.AuthStep;
-import com.viet.aodai.auth.domain.enumration.MfaType;
+import com.viet.aodai.auth.domain.enumeration.AuthStep;
+import com.viet.aodai.auth.domain.enumeration.MfaType;
 import com.viet.aodai.auth.domain.request.LoginRequest;
 import com.viet.aodai.auth.domain.response.AuthResponse;
+import com.viet.aodai.auth.domain.security.JwtTokenProvider;
 import com.viet.aodai.auth.domain.security.SessionService;
 import com.viet.aodai.auth.service.AuthStrategy;
 import com.viet.aodai.auth.service.MfaService;
-import com.viet.aodai.core.common.exception.AccountIsLocked;
 import com.viet.aodai.core.common.exception.AuthException;
 import com.viet.aodai.core.common.exception.PassWordErrorException;
-import com.viet.aodai.core.common.exception.StatusUserException;
 import com.viet.aodai.core.config.SecurityConfig;
 import com.viet.aodai.user.domain.dto.UserStatus;
 import com.viet.aodai.user.domain.entity.User;
 import com.viet.aodai.user.repository.UserRepository;
-import jdk.dynalink.linker.LinkerServices;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -32,6 +30,7 @@ public class PasswordAuthStrategy implements AuthStrategy {
     private final SecurityConfig securityConfig;
     private final SessionService sessionService;
     private final MfaService mfaService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     public AuthResponse execute(Object request) {
@@ -51,34 +50,37 @@ public class PasswordAuthStrategy implements AuthStrategy {
         user.setLastLogin(LocalDateTime.now());
         resetFailedAttempts(user);
 
-        String sessionToken = sessionService.generateSessionToken(
-                user.getUserId(),
-                user.getUsername(),
-                loginRequest.getDeviceFingerprint()
-        );
+//        String sessionToken = sessionService.generateSessionToken(
+//                user.getUserId(),
+//                user.getUsername(),
+//                loginRequest.getDeviceFingerprint()
+//        );
+//
+//        if (user.isMfaEnabled()){
+//            return AuthResponse.builder()
+//                    .nextStep(AuthStep.MFA_REQUIRED)
+//                    .sessionToken(sessionToken)
+//                    .sessionToken(sessionToken)
+//                    .mfaRequired(true)
+//                    .availableMfaTypes(getAvailableAttempts(user))
+//                    .build();
+//        }
+//
+//        log.warn("User {} has MFA disabled - skipping MFA", user.getUsername());
+//
+//        sessionService.invalidateSession(sessionToken);
+//
+//        return AuthResponse.builder()
+//                .nextStep(AuthStep.COMPLETE)
+//                .message("Login successful")
+//                .mfaRequired(false)
+//                .build();
 
-        if (user.isMfaEnabled()){
-            return AuthResponse.builder()
-                    .nextStep(AuthStep.MFA_REQUIRED)
-                    .sessionToken(sessionToken)
-                    .sessionToken(sessionToken)
-                    .mfaRequired(true)
-                    .availableMfaTypes(getAvailableAttempts(user))
-                    .build();
+        if (user.isMfaEnabled()) {
+            return handleMfaEnabledUser(user, loginRequest.getDeviceFingerprint());
+        } else {
+            return handleMfaDisabledUser(user, loginRequest.getDeviceFingerprint());
         }
-
-        log.warn("User {} has MFA disabled - skipping MFA", user.getUsername());
-
-        sessionService.invalidateSession(sessionToken);
-
-        return AuthResponse.builder()
-                .nextStep(AuthStep.COMPLETE)
-                .message("Login successful")
-                .mfaRequired(false)
-                .build();
-
-
-
     }
 
     @Override
@@ -123,7 +125,47 @@ public class PasswordAuthStrategy implements AuthStrategy {
         if (user.getPhoneNumber() != null && user.isPhoneVerified()){
             types.add(MfaType.SMS);
         }
+        if (types.isEmpty()){
+            log.error("User {} has MFA enabled but no verified contact methods!",
+                    user.getUsername());
+            throw new AuthException("No verified MFA methods available. Please contact support.");
+        }
         return types;
     }
+
+    private AuthResponse handleMfaDisabledUser(User user, String deviceFingerprint){
+        log.warn("User {} has MFA DISABLED - generating tokens directly (security risk!)",
+                user.getUsername());
+        String accessToken = jwtTokenProvider.generateAccessToken(user);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user, deviceFingerprint);
+
+        return AuthResponse.builder()
+                .nextStep(AuthStep.COMPLETE)
+                .message("Login successful")
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .mfaRequired(false)
+                .build();
+    }
+
+    private AuthResponse handleMfaEnabledUser(User user, String deviceFingerprint){
+        log.info("User {} has MFA enabled - proceeding to MFA selection", user.getUsername());
+
+        String sessionToken = sessionService.generateSessionToken(
+                user.getUserId(),
+                user.getUsername(),
+                deviceFingerprint
+        );
+
+        return AuthResponse.builder()
+                .nextStep(AuthStep.MFA_REQUIRED)
+                .message("Please select MFA method")
+                .sessionToken(sessionToken)
+                .mfaRequired(true)
+                .availableMfaTypes(getAvailableAttempts(user))
+                .build();
+    }
+
+
 
 }

@@ -1,6 +1,6 @@
 package com.viet.aodai.auth.domain.entity;
 
-import com.viet.aodai.auth.domain.enumration.MfaType;
+import com.viet.aodai.auth.domain.enumeration.MfaType;
 import com.viet.aodai.user.domain.entity.User;
 import jakarta.persistence.*;
 import lombok.*;

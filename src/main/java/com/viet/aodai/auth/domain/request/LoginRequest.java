@@ -1,6 +1,5 @@
 package com.viet.aodai.auth.domain.request;
 
-import com.viet.aodai.auth.domain.enumration.MfaType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;

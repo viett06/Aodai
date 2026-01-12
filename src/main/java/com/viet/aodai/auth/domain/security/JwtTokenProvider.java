@@ -1,7 +1,7 @@
 package com.viet.aodai.auth.domain.security;
 
 
-import com.viet.aodai.auth.domain.enumration.TokenType;
+import com.viet.aodai.auth.domain.enumeration.TokenType;
 import com.viet.aodai.user.domain.entity.User;
 
 import io.jsonwebtoken.JwtException;

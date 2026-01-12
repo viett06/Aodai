@@ -1,22 +1,16 @@
 package com.viet.aodai.auth.service.impl;
 
-import com.viet.aodai.auth.domain.enumration.AuthStep;
+import com.viet.aodai.auth.domain.enumeration.AuthStep;
 import com.viet.aodai.auth.domain.request.LoginRequest;
 import com.viet.aodai.auth.domain.request.SelectMfaRequest;
 import com.viet.aodai.auth.domain.request.VerifyMfaRequest;
 import com.viet.aodai.auth.domain.response.AuthResponse;
-import com.viet.aodai.auth.domain.security.JwtTokenProvider;
 import com.viet.aodai.auth.service.AuthService;
 import com.viet.aodai.auth.service.AuthStrategy;
-import com.viet.aodai.auth.service.MfaService;
 import com.viet.aodai.core.common.exception.*;
-import com.viet.aodai.user.domain.entity.User;
-import com.viet.aodai.user.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -35,6 +29,7 @@ public class AuthServiceImpl implements AuthService {
 
     @PostConstruct
     // tra cứu map thông qua key là step ở các class implement AuthStrategy
+    // Function.identity() trả về chính object đó
     public void init(){
         strategyMap = authStrategies.stream().collect(Collectors.toMap(
                 AuthStrategy::getStep,

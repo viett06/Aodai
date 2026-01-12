@@ -1,20 +1,16 @@
 package com.viet.aodai.auth.domain.security.impl;
 
 import com.viet.aodai.auth.domain.dto.PendingAuthSession;
-import com.viet.aodai.auth.domain.enumration.AuthStep;
-import com.viet.aodai.auth.domain.enumration.MfaType;
+import com.viet.aodai.auth.domain.enumeration.AuthStep;
+import com.viet.aodai.auth.domain.enumeration.MfaType;
 import com.viet.aodai.auth.domain.security.SessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.sound.midi.MidiFileFormat;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @Service

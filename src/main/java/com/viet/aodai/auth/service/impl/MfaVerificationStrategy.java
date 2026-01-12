@@ -2,7 +2,7 @@ package com.viet.aodai.auth.service.impl;
 
 
 import com.viet.aodai.auth.domain.dto.PendingAuthSession;
-import com.viet.aodai.auth.domain.enumration.AuthStep;
+import com.viet.aodai.auth.domain.enumeration.AuthStep;
 import com.viet.aodai.auth.domain.request.VerifyMfaRequest;
 import com.viet.aodai.auth.domain.response.AuthResponse;
 import com.viet.aodai.auth.domain.security.JwtTokenProvider;
@@ -15,7 +15,6 @@ import com.viet.aodai.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Component

@@ -20,8 +20,7 @@ import java.security.PrivateKey;
 @Validated
 public class JwtProperties {
 
-    @NotBlank
-    private String secret;
+
 
     @NotBlank
     private String issuer = "ao-dai-rental";

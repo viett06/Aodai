@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 import javax.print.event.PrintJobAttributeEvent;
@@ -18,9 +19,8 @@ import java.security.PrivateKey;
 @Getter
 @Setter
 @Validated
+@Component
 public class JwtProperties {
-
-
 
     @NotBlank
     private String issuer = "ao-dai-rental";
@@ -35,7 +35,7 @@ public class JwtProperties {
 
     @NotNull
     @Min(300000)
-    private Long emailVerificationExpỉation = 86400000L; // 24 hours
+    private Long emailVerificationExpiration = 86400000L; // 24 hours
 
     @NotNull
     @Min(300000) // 5 minutes

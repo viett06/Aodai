@@ -6,7 +6,7 @@ import com.viet.aodai.auth.repository.MfaOtpRepository;
 import com.viet.aodai.auth.service.MfaService;
 import com.viet.aodai.auth.service.SendOtpServiceCustom;
 import com.viet.aodai.core.common.exception.AuthException;
-import com.viet.aodai.core.config.SecurityConfig;
+import com.viet.aodai.core.config.PasswordEncoderConfig;
 import com.viet.aodai.user.domain.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @Service
 public class MfaServiceImpl implements MfaService {
 
-    private final SecurityConfig securityConfig;
+    private final PasswordEncoderConfig passwordEncoderConfig;
     private final MfaOtpRepository mfaOtpRepository;
     private final SendOtpServiceCustom sendOtpServiceCustom;
 
@@ -37,7 +37,7 @@ public class MfaServiceImpl implements MfaService {
         MfaOtp mfaOtp = mfaOtpRepository.findValidOtp(userId)
                 .orElseThrow(()-> new AuthException("Invalid or Expired OTP"));
         // verify OTP
-        if (!securityConfig.passwordEncoder().matches(otp,mfaOtp.getOtpHash())){
+        if (!passwordEncoderConfig.passwordEncoder().matches(otp,mfaOtp.getOtpHash())){
             mfaOtp.incrementAttempt();
             mfaOtpRepository.save(mfaOtp);
             if (mfaOtp.getAttemptCount() >=5){
@@ -64,7 +64,7 @@ public class MfaServiceImpl implements MfaService {
     private void saveOtpToDatabase(User user, String otp, MfaType mfaType){
         MfaOtp mfaOtp = MfaOtp.builder()
                 .user(user)
-                .otpHash(securityConfig.passwordEncoder().encode(otp))
+                .otpHash(passwordEncoderConfig.passwordEncoder().encode(otp))
                 .type(mfaType)
                 .expiredAt(LocalDateTime.now())
                 .used(false)

@@ -22,23 +22,23 @@ public class SecurityConfig {
     private static String[] PUBLIC_POST_ENDPOINTS = {""};
     private static String[] PUBLIC_GET_ENDPOINTS ={""};
 
-    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
-    private SecurityConfig(JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint){
+    private final CustomJwtDecoder customJwtDecoder;
+
+    private final JwtConfigConverter jwtConfigConverter;
+
+    public SecurityConfig(
+            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+            CustomJwtDecoder customJwtDecoder,
+            JwtConfigConverter jwtConfigConverter
+    ) {
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
-    }
-
-    public CustomJwtDecoder customJwtDecoder;
-
-    public SecurityConfig(CustomJwtDecoder customJwtDecoder){
-        this.customJwtDecoder =customJwtDecoder;
-    }
-
-    private JwtConfigConverter jwtConfigConverter;
-
-    public SecurityConfig(JwtConfigConverter jwtConfigConverter){
+        this.customJwtDecoder = customJwtDecoder;
         this.jwtConfigConverter = jwtConfigConverter;
     }
+
+
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
@@ -63,7 +63,6 @@ public class SecurityConfig {
                 // bat loi 401 o tang ngoai
                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)
         );
-        httpSecurity.csrf(AbstractHttpConfigurer::disable);
         return httpSecurity.build();
     }
 

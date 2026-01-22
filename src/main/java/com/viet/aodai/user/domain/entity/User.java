@@ -1,5 +1,8 @@
 package com.viet.aodai.user.domain.entity;
 
+import com.viet.aodai.cart.domain.entity.Cart;
+import com.viet.aodai.order.domain.entity.Order;
+import com.viet.aodai.order.domain.entity.Review;
 import com.viet.aodai.user.domain.dto.UserRole;
 import com.viet.aodai.user.domain.dto.UserStatus;
 import jakarta.persistence.*;
@@ -9,6 +12,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -88,6 +93,14 @@ public class User {
     @Column(name = "deleted")
     private boolean deleted;
 
+    @OneToMany(mappedBy = "user")
+    private Set<Order> orders = new HashSet<>();
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Cart cart;
+
+    @OneToMany(mappedBy = "user")
+    private Set<Review> reviews = new HashSet<>();
     // security check
     public boolean isAccountNonLocked(){
         return lockedUntil == null || lockedUntil.isBefore(LocalDateTime.now());
@@ -112,6 +125,5 @@ public class User {
         this.failedLoginAttempts = 0;
         this.lockedUntil = null;
     }
-
 
 }

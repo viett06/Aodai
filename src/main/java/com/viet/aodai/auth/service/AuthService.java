@@ -15,4 +15,6 @@ public interface AuthService {
     AuthResponse selectMfaMethod(SelectMfaRequest request);
 
     AuthResponse verifyMfa(VerifyMfaRequest request);
+
+    void logOut(String tôken, String refreshToken);
 }

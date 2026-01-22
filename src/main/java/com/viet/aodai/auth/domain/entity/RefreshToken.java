@@ -40,7 +40,7 @@ public class RefreshToken {
     @Column(name = "expiry_date", nullable = false)
     private LocalDateTime expiryDate;
 
-    @Column(name = "revoke_at")
+    @Column(name = "revoked")
     private boolean revoked;
 
     @Column(name = "revoke_reason")

@@ -1,5 +1,6 @@
 package com.viet.aodai.user.domain.mapper;
 
+import com.viet.aodai.user.domain.dto.UserRole;
 import com.viet.aodai.user.domain.entity.User;
 import com.viet.aodai.user.domain.request.RegisterRequest;
 import com.viet.aodai.user.domain.response.UserResponse;
@@ -12,6 +13,11 @@ public class UserMapper {
         user.setEmail(request.getEmail());
         user.setPhoneNumber(request.getPhoneNumber());
         user.setAddress(request.getAddress());
+        user.setEmailVerified(true);
+        user.setPhoneVerified(true);
+        // sau này phỉa thêm chức năng bật tắt mfa thì sẽ set ở đây là false
+        user.setMfaEnabled(true);
+        user.setDeleted(false);
         return user;
     }
     public static UserResponse toUserResponse(User user){

@@ -10,7 +10,7 @@ import com.viet.aodai.auth.service.AuthStrategy;
 import com.viet.aodai.auth.service.MfaService;
 import com.viet.aodai.core.common.exception.AuthException;
 import com.viet.aodai.core.common.exception.PassWordErrorException;
-import com.viet.aodai.core.config.SecurityConfig;
+import com.viet.aodai.core.config.PasswordEncoderConfig;
 import com.viet.aodai.user.domain.dto.UserStatus;
 import com.viet.aodai.user.domain.entity.User;
 import com.viet.aodai.user.repository.UserRepository;
@@ -27,7 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PasswordAuthStrategy implements AuthStrategy {
     private final UserRepository userRepository;
-    private final SecurityConfig securityConfig;
+    private final PasswordEncoderConfig passwordEncoderConfig;
     private final SessionService sessionService;
     private final MfaService mfaService;
     private final JwtTokenProvider jwtTokenProvider;
@@ -42,7 +42,7 @@ public class PasswordAuthStrategy implements AuthStrategy {
 
         validateAccountStatus(user);
 
-        if (!securityConfig.passwordEncoder().matches(loginRequest.getPassword(),user.getPasswordHash())){
+        if (!passwordEncoderConfig.passwordEncoder().matches(loginRequest.getPassword(),user.getPasswordHash())){
             handleFailedLogin(user);
             throw new PassWordErrorException("Invalid credentials");
         }

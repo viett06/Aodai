@@ -9,4 +9,5 @@ public interface AuthStrategy {
     boolean supports(AuthStep step);
 
     AuthStep getStep();
+
 }

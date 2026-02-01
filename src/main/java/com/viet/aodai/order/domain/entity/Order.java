@@ -1,5 +1,6 @@
 package com.viet.aodai.order.domain.entity;
 
+import com.viet.aodai.order.domain.enumeration.CancelledByType;
 import com.viet.aodai.order.domain.enumeration.OrderStatus;
 import com.viet.aodai.order.domain.enumeration.OrderType;
 import com.viet.aodai.payment.domain.entity.Payment;
@@ -12,11 +13,13 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Entity
-@Table(name = "order")
+@Table(name = "orders")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -54,7 +57,7 @@ public class Order {
     private String cancelReason;
 
     @Column(name = "cancelled_by")
-    private String cancelledBy; // USER, ADMIN, SYSTEM
+    private CancelledByType cancelledBy; // USER, ADMIN, SYSTEM
 
     @Column(name = "cancel_date")
     private LocalDateTime cancelDate;
@@ -66,7 +69,7 @@ public class Order {
     private Long sourceOrderId; // For reorder
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<OrderItem> items = new ArrayList<>();
+    private Set<OrderItem> items = new HashSet<>();
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private Payment payment;
@@ -75,7 +78,7 @@ public class Order {
     private Shipment shipment;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    private List<OrderHistory> history = new ArrayList<>();
+    private Set<OrderHistory> history = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -106,4 +109,23 @@ public class Order {
         return "ORD" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
                 + String.format("%04d", ThreadLocalRandom.current().nextInt(1000));
     }
+
+    // Thay đổi status
+    public OrderHistory changeStatus(OrderStatus newStatus, String changedBy, String notes) {
+        OrderHistory historyEntry = OrderHistory.builder()
+                .order(this)
+                .oldStatus(this.status)
+                .newStatus(newStatus)
+                .changedBy(changedBy)
+                .notes(notes)
+                .build();
+
+        this.history.add(historyEntry);
+        this.status = newStatus;
+        this.updatedAt = LocalDateTime.now();
+        return historyEntry;
+    }
+
+
+
 }

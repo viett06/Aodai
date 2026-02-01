@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -61,6 +62,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errors);
     }
 
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<Map<String, Object>> handleInsufficientStockException(InsufficientStockException ex){
+        Map<String, Object> errors = new HashMap<>();
+        errors.put("id", ex.getId());
+        errors.put("inventoryQuantity", ex.getInventoryQuantity());
+        errors.put("itemQuantity", ex.getItemQuantity());
+        return ResponseEntity.ok().body(errors);
+    }
 
 
 

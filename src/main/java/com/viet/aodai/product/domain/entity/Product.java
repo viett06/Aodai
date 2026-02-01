@@ -1,6 +1,7 @@
 package com.viet.aodai.product.domain.entity;
 
 import com.viet.aodai.cart.domain.entity.CartItem;
+import com.viet.aodai.order.domain.entity.OrderItem;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
@@ -47,6 +48,9 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    @OneToMany(mappedBy = "product")
+    private Set<OrderItem> orderItems;
 
     @PrePersist
     protected void onCreate() {

@@ -3,10 +3,9 @@ package com.viet.aodai.user.controller;
 
 import com.viet.aodai.user.domain.request.RegisterRequest;
 import com.viet.aodai.user.domain.response.UserResponse;
-import com.viet.aodai.user.service.UserService;
+import com.viet.aodai.user.service.impl.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -15,7 +14,7 @@ import java.util.UUID;
 @RequestMapping("/user/v1")
 @RequiredArgsConstructor
 public class UserController {
-    private final UserService userService;
+    private final UserServiceImpl userService;
 
     @PostMapping("/user")
     public ResponseEntity<UserResponse> createUser(@RequestBody RegisterRequest request){

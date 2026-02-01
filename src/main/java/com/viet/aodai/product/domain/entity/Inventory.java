@@ -1,5 +1,6 @@
 package com.viet.aodai.product.domain.entity;
 
+import com.viet.aodai.core.common.exception.AuthException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
@@ -28,16 +29,12 @@ public class Inventory {
     private Integer quantity;
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    @OneToOne(
-            optional = false
 
-    )
-    @JoinColumn(
-            name = "product_id",
-            referencedColumnName = "productId"
-    )
+    @OneToOne(optional = false)
+    @JoinColumn(name = "product_id")
     private Product product;
 
     @PrePersist
@@ -49,5 +46,26 @@ public class Inventory {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+    // Phương thức kiểm tra tồn kho
+    public boolean hasEnoughStock(int requestedQuantity) {
+        return this.quantity >= requestedQuantity;
+    }
+
+    // trừ tồn kho
+    public void decreaseStock(int quantity) {
+        if (!hasEnoughStock(quantity)) {
+//            throw new InsufficientStockException(this.product.getId(), this.quantity, quantity);
+            // sửa sau
+            throw new AuthException("quantity not enough");
+        }
+        this.quantity -= quantity;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // cộng tồn kho (cho cancel order)
+    public void increaseStock(int quantity) {
+        this.quantity += quantity;
+        this.updatedAt = LocalDateTime.now();
     }
 }

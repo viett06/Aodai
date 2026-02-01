@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,6 +32,12 @@ public class Payment {
     @Column(nullable = false)
     private BigDecimal amount;
 
+    @Column(name = "note_content")
+    private String noteContent;
+
+    @Column(name = "qrUrl")
+    private String qrUrl;
+
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
@@ -43,10 +50,27 @@ public class Payment {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        updatedAt = createdAt;
     }
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    public void confirmManually(){
+        if (this.status !=  PaymentStatus.PENDING){
+            throw  new IllegalStateException("Payment was handle");
+        }
+        this.status = PaymentStatus.COMPLETED;
+        this.paymentDate = LocalDateTime.now();
+    }
+
 }
 
 

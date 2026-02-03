@@ -117,17 +117,23 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment payment = findById(result.getPaymentId());
 
+
         // Prevent duplicate processing
         if (payment.getStatus() != PaymentStatus.PENDING) {
             log.info("Payment {} already processed", payment.getId());
             return;
         }
 
+        payment.setTransactionId(result.getTransactionId());
+        paymentRepository.save(payment);
+
         // Update payment status
-        updatePaymentFromWebhook(payment, result);
+        //updatePaymentFromWebhook(payment, result);
 
         // Notify order service about payment result
         orderService.handlePaymentWebhook(payment.getId(), result.getNewStatus());
+
+        log.info("Webhook processed for payment: {}", payment.getId());
     }
 
     @Override
@@ -157,7 +163,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private String getIpnUrlForMethod(PaymentMethod method) {
-        return "https://yourdomain.com/api/payment/webhook/" + method.name().toLowerCase();  // Config động nếu cần
+        return "http://localhost:8080/api/payment/webhook/" + method.name().toLowerCase();  // Config động nếu cần
     }
 
 

@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public interface OrderService {
-    OrderResponse createOrderFromCart(UUID userId, OrderRequest request, String returnUrl, Map<String, String> params);
+    OrderResponse createOrderFromCart(UUID userId, OrderRequest request, String returnUrl);
     OrderResponse createDirectOrder(UUID userId, DirectOrderRequest request);
     OrderResponse reOrder(UUID userId, Long sourceOrderId);
     void confirmOrder(Long orderId, OrderStatus orderStatus, PaymentStatus paymentStatus, String note);

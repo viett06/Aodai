@@ -64,7 +64,7 @@ public class OrderServiceImpl implements OrderService {
     private final PaymentRepository paymentRepository;
 
     @Override
-    public OrderResponse createOrderFromCart(UUID userId, OrderRequest request, String returnUrl, Map<String, String> params) {
+    public OrderResponse createOrderFromCart(UUID userId, OrderRequest request, String returnUrl) {
         log.info("Creating order from cart for user: {}", userId);
 
         // 1. Validate user
@@ -89,10 +89,17 @@ public class OrderServiceImpl implements OrderService {
         order.setPayment(payment);
 
         // 6. Initialize payment with payment service
-        PaymentInitiateResponse paymentInitiateResponse = initializePayment(payment, returnUrl);
-
+        // nếu lad các phương thức external payment thì sẽ được webhook xử lý handleWebhook luôn sau khi xong order không cần xử lý internal backend
+        PaymentInitiateResponse paymentInitiateResponse;
+        try {
+            paymentInitiateResponse = initializePayment(payment, returnUrl);
+        } catch (Exception e) {
+            log.error("Payment initiation failed for order: {}", orderNumber, e);
+            //Rollback transaction
+            throw new AuthException("Payment initiation failed: " + e.getMessage());
+        }
         // 7. Process payment based on type
-        processPaymentBasedOnType(order, payment, paymentInitiateResponse, params);
+        processPaymentBasedOnType(order, payment, paymentInitiateResponse);
 
         // 8. Build and return response
         return buildOrderResponse(order);
@@ -110,33 +117,52 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void confirmOrder(Long orderId,OrderStatus orderStatus, PaymentStatus paymentStatus, String note) {
+    @Transactional
+    public void confirmOrder(Long orderId,OrderStatus newOrderStatus, PaymentStatus newPaymentStatus, String note) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AuthException("Order not found"));
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot confirm cancelled order");
+        }
+
+        if (order.getStatus() == OrderStatus.PROCESSING_FINISH) {
+            throw new IllegalStateException("Order already completed");
+        }
+
 
         // Update payment status
         Payment payment = paymentRepository.findPaymentByOrderId(orderId)
                 .orElseThrow(() -> new AuthException("Payment not found"));
-        payment.setStatus(paymentStatus);
-        paymentRepository.save(payment);
 
-        // Update order status
-        OrderHistory orderHistory = order.changeStatus(orderStatus, "ADMIN", note);
-        orderHistoryRepository.save(orderHistory);
-        orderRepository.save(order);
+        if (payment.getStatus() == PaymentStatus.PENDING) {
+            payment.setStatus(newPaymentStatus);
+            payment.setPaymentDate(LocalDateTime.now());
+            paymentRepository.save(payment);
+        }
 
+
+        if (newOrderStatus == OrderStatus.PROCESSING_FINISH) {
+            orderProcessor.confirmOrderManually(orderId, note);
+        } else {
+            // Handle other status changes
+            OrderHistory history = order.changeStatus(newOrderStatus, "ADMIN", note);
+            orderHistoryRepository.save(history);
+            orderRepository.save(order);
+        }
         log.info("Order {} confirmed with status {} and payment status {}",
-                orderId, orderStatus, paymentStatus);
+                orderId, newOrderStatus, newPaymentStatus);
     }
 
     @Override
-    public void handlePaymentWebhook(Long paymentId, PaymentStatus paymentStatus) {
+    @Transactional
+    public void handlePaymentWebhook(Long paymentId, PaymentStatus newPaymentStatus) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new AuthException("Payment not found"));
 
-        orderProcessor.processPaymentResult(payment, paymentStatus);
+        orderProcessor.processPaymentResult(payment, newPaymentStatus);
 
-        log.info("Payment webhook processed: {} -> {}", paymentId, paymentStatus);
+        log.info("Payment webhook processed: {} -> {}", paymentId, newPaymentStatus);
     }
 
     private User validateUser(UUID userId){
@@ -187,18 +213,15 @@ public class OrderServiceImpl implements OrderService {
      private record OrderItemData(Product product, Integer quantity,
                                   BigDecimal unitPrice, BigDecimal totalPrice){};
 
-    // bỏ cũng được
-    private void checkAction(String action, Map<String, String> params){
-        switch (action){
-            case "MOMO" -> paymentService.handleWebhook(action, params);
-            case "VN_PAY" -> paymentService.handleWebhook(action, params);
-            case "PAYPAL" -> paymentService.handleWebhook(action,params);
-        }
-    }
 
     private PaymentInitiateResponse initializePayment(Payment payment, String returnUrl) {
+        Order order = payment.getOrder();
+        if (order == null) {
+            throw new IllegalStateException("Payment has no associated order");
+        }
+
         PaymentInitiateRequest paymentRequest = PaymentInitiateRequest.builder()
-                .orderId(payment.getOrder().getId())
+                .orderId(order.getId())
                 .paymentMethod(payment.getPaymentMethod())
                 .returnUrl(returnUrl)
                 .build();
@@ -207,8 +230,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private void processPaymentBasedOnType(Order order, Payment payment,
-                                           PaymentInitiateResponse paymentResponse,
-                                           Map<String, String> params) {
+                                           PaymentInitiateResponse paymentResponse) {
         PaymentMethod paymentMethod = payment.getPaymentMethod();
 
         // Handle immediate payments (COD, BANK_TRANSFER)
@@ -224,10 +246,16 @@ public class OrderServiceImpl implements OrderService {
         }
         // Handle redirect payments
         else {
-            orderProcessor.handleRedirectPayment(order, payment);
+            //orderProcessor.handleRedirectPayment(order, payment);
 
             // Process payment gateway if needed
-            processPaymentGateway(paymentResponse.getAction(), params);
+            //processPaymentGateway(paymentResponse.getAction());
+
+            orderProcessor.handleRedirectPayment(order, payment);
+
+            // xư lý case khi người dùng bỏ giở thanh toán
+            log.info("Redirect payment initiated for order: {}, waiting for webhook",
+                    order.getOrderNumber());
         }
 
         // Save final state
@@ -239,15 +267,4 @@ public class OrderServiceImpl implements OrderService {
                 paymentMethod == PaymentMethod.BANK_TRANSFER;
     }
 
-    private void processPaymentGateway(String action, Map<String, String> params) {
-        if (requiresPaymentGatewayProcessing(action)) {
-            paymentService.handleWebhook(action, params);
-        }
-    }
-
-    private boolean requiresPaymentGatewayProcessing(String action) {
-        return "MOMO".equals(action) ||
-                "VN_PAY".equals(action) ||
-                "PAYPAL".equals(action);
-    }
 }

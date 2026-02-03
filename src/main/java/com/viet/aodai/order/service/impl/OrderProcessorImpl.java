@@ -8,11 +8,14 @@ import com.viet.aodai.order.repository.OrderRepository;
 import com.viet.aodai.order.service.OrderProcessor;
 import com.viet.aodai.payment.domain.entity.Payment;
 import com.viet.aodai.payment.domain.enumeration.PaymentStatus;
+import com.viet.aodai.payment.repository.PaymentRepository;
 import com.viet.aodai.user.domain.dto.UserRole;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -20,11 +23,19 @@ import org.springframework.stereotype.Service;
 public class OrderProcessorImpl implements OrderProcessor {
     private final OrderRepository orderRepository;
     private final OrderHistoryRepository orderHistoryRepository;
+    private final PaymentRepository paymentRepository;
 
     @Override
     @Transactional
     public Order processPaymentResult(Payment payment, PaymentStatus paymentStatus) {
         Order order = payment.getOrder();
+
+        // tránh xử lý duplicate
+        if (order.getStatus() != OrderStatus.PENDING) {
+            log.warn("Order {} already processed, current status: {}",
+                    order.getId(), order.getStatus());
+            return order;
+        }
 
         if (paymentStatus == PaymentStatus.COMPLETED){
             return handlePaymentSuccess(order, payment);
@@ -96,6 +107,10 @@ public class OrderProcessorImpl implements OrderProcessor {
 
         order.setStatus(OrderStatus.PROCESSING_FINISH);
 
+        payment.setStatus(PaymentStatus.COMPLETED);
+        payment.setPaymentDate(LocalDateTime.now());
+        paymentRepository.save(payment);
+
        OrderHistory history = OrderHistory.builder()
                .order(order)
                .oldStatus(oldStatus)
@@ -118,13 +133,19 @@ public class OrderProcessorImpl implements OrderProcessor {
 
         order.setStatus(OrderStatus.CANCELLED);
 
+        payment.setStatus(PaymentStatus.FAILED);
+        payment.setPaymentDate(LocalDateTime.now());
+        paymentRepository.save(payment);
+
         OrderHistory history = OrderHistory.builder()
                 .order(order)
                 .oldStatus(oldStatus)
-                .newStatus(OrderStatus.PROCESSING_FINISH)
+                .newStatus(OrderStatus.CANCELLED)
                 .changedBy(UserRole.SYSTEM.name())
                 .notes("Payment failed via " + payment.getPaymentMethod())
                 .build();
+        orderHistoryRepository.save(history);
+        order.getHistory().add(history);
 
         log.warn("Payment failed for order: {}, payment: {}",
                 order.getOrderNumber(), payment.getId());

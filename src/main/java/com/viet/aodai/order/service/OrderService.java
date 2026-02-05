@@ -17,4 +17,5 @@ public interface OrderService {
     OrderResponse reOrder(UUID userId, Long sourceOrderId, String returnUrl, PaymentMethod paymentMethod);
     void confirmOrder(Long orderId, OrderStatus orderStatus, PaymentStatus paymentStatus, String note);
     void handlePaymentWebhook(Long paymentId, PaymentStatus paymentStatus);
+    void cancelOrder(UUID userId, Long orderId, String notes);
 }

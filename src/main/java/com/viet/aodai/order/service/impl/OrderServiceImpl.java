@@ -9,6 +9,7 @@ import com.viet.aodai.core.common.exception.UserNotFoundException;
 import com.viet.aodai.order.domain.entity.Order;
 import com.viet.aodai.order.domain.entity.OrderHistory;
 import com.viet.aodai.order.domain.entity.OrderItem;
+import com.viet.aodai.order.domain.enumeration.CancelledByType;
 import com.viet.aodai.order.domain.enumeration.OrderStatus;
 import com.viet.aodai.order.domain.enumeration.OrderType;
 import com.viet.aodai.order.domain.mapper.OrderHistoryMapper;
@@ -54,6 +55,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @RequiredArgsConstructor
 @Slf4j
 public class OrderServiceImpl implements OrderService {
+    private final InventoryRepository inventoryRepository;
     private final OrderCreationService orderCreationService;
     private final OrderProcessor orderProcessor;
     private final CartRepository cartRepository;
@@ -210,6 +212,67 @@ public class OrderServiceImpl implements OrderService {
         orderProcessor.processPaymentResult(payment, newPaymentStatus);
 
         log.info("Payment webhook processed: {} -> {}", paymentId, newPaymentStatus);
+    }
+
+    @Override
+    @Transactional
+    public void cancelOrder(UUID userId, Long orderId, String notes) {
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(() -> new AuthException("user not found"));
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(()-> new AuthException(" Order not found"));
+
+        if (!order.getUser().getUserId().equals(userId)) {
+            throw new AuthException("You don't have permission to cancel this order");
+        }
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Cannot cancel order with status: " + order.getStatus() +
+                            ". Only PENDING orders can be cancelled."
+            );
+        }
+
+        Payment payment = paymentRepository.findPaymentByOrderId(orderId)
+                .orElseThrow(() -> new AuthException("Payment not found"));
+
+        if (payment.getStatus() == PaymentStatus.COMPLETED) {
+            throw new IllegalStateException(
+                    "Cannot cancel order with completed payment. Please contact support."
+            );
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        order.setCancelledBy(CancelledByType.USER);
+
+
+        OrderHistory history = order.changeStatus(
+                OrderStatus.CANCELLED,
+                user.getRole().name(),
+                notes != null ? notes : "Cancelled by user"
+        );
+        orderHistoryRepository.save(history);
+
+        // Cancel payment
+        if (payment.getStatus() == PaymentStatus.PENDING) {
+            payment.setStatus(PaymentStatus.CANCELED);
+            paymentRepository.save(payment);
+        }
+
+        for (OrderItem orderItem : order.getItems()) {
+            Product product = orderItem.getProduct();
+
+            Inventory inventory = inventoryRepository.findInventoryByProduct(product.getId())
+                    .orElseThrow(() -> new AuthException("Inventory not found for product: " + product.getId()));
+
+            inventory.increaseStock(orderItem.getQuantity());
+            inventoryRepository.save(inventory);
+        }
+
+        orderRepository.save(order);
+
+        log.info("Order {} cancelled by user {}", orderId, userId);
     }
 
     private User validateUser(UUID userId){

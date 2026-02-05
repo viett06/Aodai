@@ -5,6 +5,7 @@ import com.viet.aodai.order.domain.request.DirectOrderRequest;
 import com.viet.aodai.order.domain.request.OrderRequest;
 import com.viet.aodai.order.domain.response.OrderResponse;
 import com.viet.aodai.order.service.OrderService;
+import com.viet.aodai.payment.domain.enumeration.PaymentMethod;
 import com.viet.aodai.payment.domain.enumeration.PaymentStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -24,13 +25,13 @@ public class OrderController {
     }
 
     @PostMapping("/direct")
-    public OrderResponse createDirectOrder(UUID userId, @RequestBody DirectOrderRequest request){
-        return orderService.createDirectOrder(userId, request);
+    public OrderResponse createDirectOrder(UUID userId, @RequestBody DirectOrderRequest request, String returnUrl){
+        return orderService.createDirectOrder(userId, request, returnUrl);
     }
 
     @PostMapping("/reorder")
-    public OrderResponse reOrder(UUID userId, Long sourceOrderId){
-        return orderService.reOrder(userId, sourceOrderId);
+    public OrderResponse reOrder(UUID userId, Long sourceOrderId, String returnUrl, PaymentMethod paymentMethod){
+        return orderService.reOrder(userId, sourceOrderId, returnUrl, paymentMethod);
     }
 
     @PatchMapping("/confirm")

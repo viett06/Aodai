@@ -107,13 +107,60 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponse createDirectOrder(UUID userId, DirectOrderRequest request) {
-        return null;
+    @Transactional
+    public OrderResponse createDirectOrder(UUID userId, DirectOrderRequest request, String returnUrl) {
+
+        User user = validateUser(userId);
+
+        String orderNumber = generateOrderNumber();
+
+        Order order = orderCreationService.createDirectOrder(user, request, orderNumber);
+
+        Payment payment = orderCreationService.createPayment(order, request.getPaymentMethod());
+        order.setPayment(payment);
+
+        PaymentInitiateResponse paymentInitiateResponse;
+        try {
+            paymentInitiateResponse = initializePayment(payment, returnUrl);
+        } catch (Exception e) {
+            log.error("Payment initiation failed for order: {}", orderNumber, e);
+            //Rollback transaction
+            throw new AuthException("Payment initiation failed: " + e.getMessage());
+        }
+
+        processPaymentBasedOnType(order, payment, paymentInitiateResponse);
+
+        return buildOrderResponse(order);
     }
 
     @Override
-    public OrderResponse reOrder(UUID userId, Long sourceOrderId) {
-        return null;
+    @Transactional
+    public OrderResponse reOrder(UUID userId, Long sourceOrderId, String returnUrl, PaymentMethod paymentMethod) {
+        User user = validateUser(userId);
+
+        String orderNumber = generateOrderNumber();
+
+        Order order = orderCreationService.reOrder(user, sourceOrderId, orderNumber);
+
+        Payment payment = orderCreationService.createPayment(order, paymentMethod);
+        order.setPayment(payment);
+
+        PaymentInitiateResponse paymentInitiateResponse;
+        try {
+            paymentInitiateResponse = initializePayment(payment, returnUrl);
+        } catch (Exception e) {
+            log.error("Payment initiation failed for order: {}", orderNumber, e);
+            //Rollback transaction
+            throw new AuthException("Payment initiation failed: " + e.getMessage());
+        }
+
+        processPaymentBasedOnType(order, payment, paymentInitiateResponse);
+
+
+        return buildOrderResponse(order);
+
+
+
     }
 
     @Override

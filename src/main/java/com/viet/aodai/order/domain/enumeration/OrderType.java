@@ -1,10 +1,10 @@
 package com.viet.aodai.order.domain.enumeration;
 
 public enum OrderType {
-    FROM_CART("Từ giỏ hàng"),
-    BUY_NOW("Mua ngay"),
-    REORDER("Mua lại"),
-    QUICK_CHECKOUT("Thanh toán nhanh");
+    FROM_CART("fromCash"),
+    BUY_NOW("buyNow"),
+    REORDER("reOrder"),
+    QUICK_CHECKOUT("quickOrder");
 
     private final String description;
 

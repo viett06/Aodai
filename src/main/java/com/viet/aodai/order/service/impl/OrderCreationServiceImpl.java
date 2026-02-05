@@ -66,6 +66,9 @@ public class OrderCreationServiceImpl implements OrderCreationService {
     @Override
     @Transactional
     public Order createDirectOrder(User user, DirectOrderRequest request, String orderNumber) {
+
+        validateStockForDirectOrder(request);
+
         Order order = createReDirectOrderEntity(user, request, orderNumber);
 
         Order savedOrder = orderRepository.save(order);
@@ -76,36 +79,50 @@ public class OrderCreationServiceImpl implements OrderCreationService {
     }
 
     @Override
+    @Transactional
     public Order reOrder(User user, Long sourceOrderId, String orderNumber) {
-        Order order = createReOrder(user, sourceOrderId, orderNumber);
 
-        Order savedOrder = orderRepository.save(order);
+        Order sourceOrder = orderRepository.findById(sourceOrderId)
+                .orElseThrow(() -> new AuthException("Order not found"));
 
-        for (OrderItem orderItems : savedOrder.getItems()) {
-            Product product = orderItems.getProduct();
-            Integer quantity = orderItems.getQuantity();
+        validateStockForReorder(sourceOrder);
+
+       Order newOrder = createReOrder(user, sourceOrderId, sourceOrder, orderNumber);
+
+        Order savedOrder = orderRepository.save(newOrder);
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        for (OrderItem sourceItem : sourceOrder.getItems()) {
+            Product product = sourceItem.getProduct();
+            Integer quantity = sourceItem.getQuantity();
+
             Inventory inventory = inventoryRepository.findInventoryByProduct(product.getId())
-                    .orElseThrow(()-> new AuthException("Inventory not found"));
+                    .orElseThrow(() -> new AuthException("Inventory not found for product: " + product.getId()));
 
             inventory.decreaseStock(quantity);
-
             inventoryRepository.save(inventory);
 
-            OrderItem orderItem = OrderItem.builder()
-                    .order(order)
+            BigDecimal itemTotal = product.getPrice().multiply(BigDecimal.valueOf(quantity));
+            totalAmount = totalAmount.add(itemTotal);
+
+            OrderItem newItem = OrderItem.builder()
+                    .order(savedOrder)
                     .product(product)
                     .productName(product.getName())
                     .quantity(quantity)
-                    .totalPrice(orderItems.getTotalPrice())
                     .unitPrice(product.getPrice())
+                    .totalPrice(itemTotal)
                     .build();
 
-            orderItemRepository.save(orderItem);
-            order.getItems().add(orderItem);
+            orderItemRepository.save(newItem);
+            savedOrder.getItems().add(newItem);
         }
 
-        return savedOrder;
+        savedOrder.setTotalAmount(totalAmount);
+        orderRepository.save(savedOrder);
 
+        return savedOrder;
 
     }
 
@@ -123,6 +140,40 @@ public class OrderCreationServiceImpl implements OrderCreationService {
                         cartItem.getQuantity()
                 );
             }
+        }
+    }
+
+    private void validateStockForReorder(Order sourceOrder) {
+        for (OrderItem item : sourceOrder.getItems()) {
+            Product product = item.getProduct();
+            Inventory inventory = inventoryRepository.findInventoryByProduct(product.getId())
+                    .orElseThrow(() -> new AuthException("Inventory not found for product: " + product.getId()));
+
+            if (!inventory.hasEnoughStock(item.getQuantity())) {
+                throw new InsufficientStockException(
+                        "Insufficient stock for product: " + product.getName(),
+                        product.getId(),
+                        inventory.getQuantity(),
+                        item.getQuantity()
+                );
+            }
+        }
+    }
+
+    private void validateStockForDirectOrder(DirectOrderRequest request){
+        Product product = productRepository.findById(request.getProductId())
+                .orElseThrow(() -> new AuthException("Product not found"));
+
+        Inventory inventory = inventoryRepository.findInventoryByProduct(product.getId())
+                .orElseThrow(() -> new AuthException("Inventory not found"));
+
+        if (!inventory.hasEnoughStock(request.getQuantity())) {
+            throw new InsufficientStockException(
+                    "Insufficient stock for product: " + product.getName(),
+                    product.getId(),
+                    inventory.getQuantity(),
+                    request.getQuantity()
+            );
         }
     }
 
@@ -157,21 +208,18 @@ public class OrderCreationServiceImpl implements OrderCreationService {
                 .build();
     }
 
-    private Order createReOrder(User user, Long sourceOrderId, String orderNumber){
+    private Order createReOrder(User user,Long sourceOrderId,  Order sourceOrder, String orderNumber){
 
-        Order order = orderRepository.findById(sourceOrderId)
-                .orElseThrow(()-> new AuthException("Order not found"));
-
-        return Order.builder()
+      return     Order.builder()
                 .orderNumber(orderNumber)
                 .user(user)
-                .totalAmount(order.getTotalAmount())
                 .orderType(OrderType.REORDER)
                 .status(OrderStatus.PENDING)
-                .shippingAddress(order.getShippingAddress())
-                .billingAddress(order.getBillingAddress())
-                .notes(order.getNotes())
-                .items(order.getItems())
+                .sourceOrderId(sourceOrderId) // Link đến order gốc
+                .shippingAddress(sourceOrder.getShippingAddress())
+                .billingAddress(sourceOrder.getBillingAddress())
+                .notes(sourceOrder.getNotes())
+                .items(new HashSet<>())
                 .history(new HashSet<>())
                 .build();
     }

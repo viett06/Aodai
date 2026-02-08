@@ -11,7 +11,7 @@ import com.viet.aodai.auth.service.MfaService;
 import com.viet.aodai.core.common.exception.AuthException;
 import com.viet.aodai.core.common.exception.PassWordErrorException;
 import com.viet.aodai.core.config.PasswordEncoderConfig;
-import com.viet.aodai.user.domain.dto.UserStatus;
+import com.viet.aodai.user.domain.enumeration.UserStatus;
 import com.viet.aodai.user.domain.entity.User;
 import com.viet.aodai.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -50,36 +50,11 @@ public class PasswordAuthStrategy implements AuthStrategy {
         user.setLastLogin(LocalDateTime.now());
         resetFailedAttempts(user);
 
-//        String sessionToken = sessionService.generateSessionToken(
-//                user.getUserId(),
-//                user.getUsername(),
-//                loginRequest.getDeviceFingerprint()
-//        );
-//
-//        if (user.isMfaEnabled()){
-//            return AuthResponse.builder()
-//                    .nextStep(AuthStep.MFA_REQUIRED)
-//                    .sessionToken(sessionToken)
-//                    .sessionToken(sessionToken)
-//                    .mfaRequired(true)
-//                    .availableMfaTypes(getAvailableAttempts(user))
-//                    .build();
-//        }
-//
-//        log.warn("User {} has MFA disabled - skipping MFA", user.getUsername());
-//
-//        sessionService.invalidateSession(sessionToken);
-//
-//        return AuthResponse.builder()
-//                .nextStep(AuthStep.COMPLETE)
-//                .message("Login successful")
-//                .mfaRequired(false)
-//                .build();
 
         if (user.isMfaEnabled()) {
-            return handleMfaEnabledUser(user, loginRequest.getDeviceFingerprint());
+            return handleMfaEnabledUser(user);
         } else {
-            return handleMfaDisabledUser(user, loginRequest.getDeviceFingerprint());
+            return handleMfaDisabledUser(user);
         }
     }
 
@@ -133,11 +108,11 @@ public class PasswordAuthStrategy implements AuthStrategy {
         return types;
     }
 
-    private AuthResponse handleMfaDisabledUser(User user, String deviceFingerprint){
+    private AuthResponse handleMfaDisabledUser(User user){
         log.warn("User {} has MFA DISABLED - generating tokens directly (security risk!)",
                 user.getUsername());
         String accessToken = jwtTokenProvider.generateAccessToken(user);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user, deviceFingerprint);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user);
 
         return AuthResponse.builder()
                 .nextStep(AuthStep.COMPLETE)
@@ -148,14 +123,15 @@ public class PasswordAuthStrategy implements AuthStrategy {
                 .build();
     }
 
-    private AuthResponse handleMfaEnabledUser(User user, String deviceFingerprint){
+    private AuthResponse handleMfaEnabledUser(User user){
         log.info("User {} has MFA enabled - proceeding to MFA selection", user.getUsername());
 
         String sessionToken = sessionService.generateSessionToken(
                 user.getUserId(),
-                user.getUsername(),
-                deviceFingerprint
+                user.getUsername()
         );
+
+        sessionService.updateSessionToken(sessionToken, AuthStep.MFA_REQUIRED, null);
 
         return AuthResponse.builder()
                 .nextStep(AuthStep.MFA_REQUIRED)

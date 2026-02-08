@@ -15,10 +15,10 @@ import java.util.UUID;
 public class PendingAuthSession {
     private UUID userId;
     private String username;
-    private String deviceFingerprint;
     private AuthStep currentStep;
     private MfaType selectedMfaType;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
     private boolean otpSent;
+    private boolean isForgotPassword;
 }

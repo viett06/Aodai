@@ -22,13 +22,12 @@ public class RedisSessionServiceImpl implements SessionService {
     private final Map<String, Set<String>> userSessionsIndex = new ConcurrentHashMap<>();
 
     @Override
-    public String generateSessionToken(UUID userId, String username, String deviceFingerprint) {
+    public String generateSessionToken(UUID userId, String username) {
         String sessionToken = UUID.randomUUID().toString();
 
         PendingAuthSession session = PendingAuthSession.builder()
                 .userId(userId)
                 .username(username)
-                .deviceFingerprint(deviceFingerprint)
                 .currentStep(AuthStep.PASSWORD_VERIFY)
                 .createdAt(LocalDateTime.now())
                 .expiresAt(LocalDateTime.now().plusMinutes(1))

@@ -1,4 +1,4 @@
-package com.viet.aodai.user.domain.dto;
+package com.viet.aodai.user.domain.enumeration;
 
 public enum UserStatus {
     PENDING,

@@ -1,6 +1,5 @@
 package com.viet.aodai.user.domain.mapper;
 
-import com.viet.aodai.user.domain.dto.UserRole;
 import com.viet.aodai.user.domain.entity.User;
 import com.viet.aodai.user.domain.request.RegisterRequest;
 import com.viet.aodai.user.domain.response.UserResponse;

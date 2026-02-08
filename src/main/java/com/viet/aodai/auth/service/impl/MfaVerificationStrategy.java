@@ -53,21 +53,31 @@ public class MfaVerificationStrategy implements AuthStrategy {
             throw new AuthException("Invalid or expired OTP");
         }
 
-        String accessToken = jwtTokenProvider.generateAccessToken(user);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user,session.getDeviceFingerprint());
+        if (session.isForgotPassword() || verifyMfaRequest.isForgetPassword()) {
 
-        // cleanup session
-        sessionService.invalidateSession(verifyMfaRequest.getSessionToken());
+            return AuthResponse.builder()
+                    .nextStep(AuthStep.COMPLETE)
+                    .message("OTP verified. You can now reset your password")
+                    .sessionToken(verifyMfaRequest.getSessionToken())
+                    .build();
+        }
+            String accessToken = jwtTokenProvider.generateAccessToken(user);
+            String refreshToken = jwtTokenProvider.generateRefreshToken(user);
 
-        log.info("User {} successful authenticated", user.getUsername());
+            // cleanup session
+            sessionService.invalidateSession(verifyMfaRequest.getSessionToken());
 
-        return AuthResponse.builder()
-                .nextStep(AuthStep.COMPLETE)
-                .message("Login successful")
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .mfaRequired(false)
-                .build();
+            log.info("User {} successful authenticated", user.getUsername());
+
+            return AuthResponse.builder()
+                    .nextStep(AuthStep.COMPLETE)
+                    .message("Login successful")
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .mfaRequired(false)
+                    .build();
+
+
 
 
     }

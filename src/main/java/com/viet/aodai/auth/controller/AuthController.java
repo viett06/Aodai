@@ -47,4 +47,23 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/forgot-password/initiate")
+    public ResponseEntity<AuthResponse> initiateForgotPassword(@RequestBody ForgotPasswordRequest request) {
+        return ResponseEntity.ok(authService.initiateForgotPassword(request.getEmail()));
+    }
+
+    @PostMapping("/forgot-password/select-mfa")
+    public ResponseEntity<AuthResponse> selectMfaForForgotPassword(@RequestBody SelectMfaRequest request) {
+        return ResponseEntity.ok(authService.selectMfaMethod(request));
+    }
+
+    @PostMapping("/forgot-password/complete")
+    public ResponseEntity<AuthResponse> completeForgotPassword(@RequestBody CompleteForgotPasswordRequest request) {
+        return ResponseEntity.ok(authService.completeForgotPassword(
+                request.getSessionToken(),
+                request.getNewPassword(),
+                request.getOtpCode()
+        ));
+    }
+
 }

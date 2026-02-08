@@ -3,8 +3,8 @@ package com.viet.aodai.user.domain.entity;
 import com.viet.aodai.cart.domain.entity.Cart;
 import com.viet.aodai.order.domain.entity.Order;
 import com.viet.aodai.order.domain.entity.Review;
-import com.viet.aodai.user.domain.dto.UserRole;
-import com.viet.aodai.user.domain.dto.UserStatus;
+import com.viet.aodai.user.domain.enumeration.UserRole;
+import com.viet.aodai.user.domain.enumeration.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -44,7 +44,7 @@ public class User {
     @Column(name = "full_name", length = 100)
     private String fullName;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, unique = true)
     private String email;
 
     @Column(name = "phone_number", length = 15)

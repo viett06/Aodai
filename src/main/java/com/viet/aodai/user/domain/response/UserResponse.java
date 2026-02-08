@@ -1,7 +1,7 @@
 package com.viet.aodai.user.domain.response;
 
-import com.viet.aodai.user.domain.dto.UserRole;
-import com.viet.aodai.user.domain.dto.UserStatus;
+import com.viet.aodai.user.domain.enumeration.UserRole;
+import com.viet.aodai.user.domain.enumeration.UserStatus;
 import lombok.*;
 
 import java.time.LocalDateTime;

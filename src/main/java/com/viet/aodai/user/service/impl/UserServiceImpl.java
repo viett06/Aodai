@@ -1,8 +1,8 @@
 package com.viet.aodai.user.service.impl;
 
 
-import com.viet.aodai.user.domain.dto.UserRole;
-import com.viet.aodai.user.domain.dto.UserStatus;
+import com.viet.aodai.user.domain.enumeration.UserRole;
+import com.viet.aodai.user.domain.enumeration.UserStatus;
 import com.viet.aodai.user.domain.entity.User;
 import com.viet.aodai.core.common.exception.UserNotFoundException;
 import com.viet.aodai.user.domain.mapper.UserMapper;

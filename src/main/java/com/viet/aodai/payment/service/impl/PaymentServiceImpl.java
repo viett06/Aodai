@@ -2,9 +2,7 @@ package com.viet.aodai.payment.service.impl;
 
 import com.viet.aodai.core.common.exception.AuthException;
 import com.viet.aodai.order.domain.entity.Order;
-import com.viet.aodai.order.domain.entity.OrderHistory;
 import com.viet.aodai.order.domain.enumeration.OrderStatus;
-import com.viet.aodai.order.domain.response.OrderResponse;
 import com.viet.aodai.order.repository.OrderHistoryRepository;
 import com.viet.aodai.order.repository.OrderRepository;
 import com.viet.aodai.order.service.OrderService;
@@ -17,14 +15,12 @@ import com.viet.aodai.payment.domain.response.PaymentInitiateResponse;
 import com.viet.aodai.payment.repository.PaymentRepository;
 import com.viet.aodai.payment.service.PaymentGatewayHandler;
 import com.viet.aodai.payment.service.PaymentService;
-import com.viet.aodai.user.domain.dto.UserRole;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.PrivateKey;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;

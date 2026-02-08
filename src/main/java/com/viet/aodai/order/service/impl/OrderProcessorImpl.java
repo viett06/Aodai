@@ -9,7 +9,7 @@ import com.viet.aodai.order.service.OrderProcessor;
 import com.viet.aodai.payment.domain.entity.Payment;
 import com.viet.aodai.payment.domain.enumeration.PaymentStatus;
 import com.viet.aodai.payment.repository.PaymentRepository;
-import com.viet.aodai.user.domain.dto.UserRole;
+import com.viet.aodai.user.domain.enumeration.UserRole;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

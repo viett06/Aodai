@@ -3,6 +3,7 @@ package com.viet.aodai.auth.domain.security;
 
 import com.viet.aodai.auth.domain.enumeration.TokenType;
 import com.viet.aodai.core.common.exception.AuthException;
+import com.viet.aodai.user.domain.enumeration.UserRole;
 import com.viet.aodai.user.domain.entity.User;
 
 import io.jsonwebtoken.*;
@@ -64,14 +65,14 @@ public class JwtTokenProvider {
 
     }
 
-    public String generateRefreshToken(User user, String deviceFingerprint) {
+    public String generateRefreshToken(User user) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtProperties.getAccessTokenExpiration());
 
         Map<String, Object> claims = new HashMap<>();
         claims.put("username", user.getUsername());
         claims.put("email", user.getEmail());
-        claims.put("role", user.getRole().name());
+        claims.put("role", UserRole.SYSTEM.name());
         claims.put("type", TokenType.REFRESH.name());
         claims.put("userId", user.getUserId());
 

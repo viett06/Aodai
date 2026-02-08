@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "invalidate_tokens")
 @Getter
@@ -14,6 +16,8 @@ import lombok.Setter;
 @NoArgsConstructor
 public class InvalidateAccessToken {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String token;
+
+    @Column(nullable = false)
+    private LocalDateTime expiredAt;
 }

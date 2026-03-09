@@ -2,7 +2,15 @@ package com.viet.aodai.payment.domain.mapper;
 
 import com.viet.aodai.payment.domain.entity.Payment;
 import com.viet.aodai.payment.domain.response.PaymentResponse;
+import lombok.*;
+import org.springframework.stereotype.Component;
 
+@Component
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class PaymentMapper {
     public static PaymentResponse toPaymentResponse(Payment payment){
        return PaymentResponse.builder()

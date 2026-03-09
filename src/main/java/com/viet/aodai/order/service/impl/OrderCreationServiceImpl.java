@@ -21,7 +21,7 @@ import com.viet.aodai.payment.repository.PaymentRepository;
 import com.viet.aodai.product.domain.entity.Inventory;
 import com.viet.aodai.product.domain.entity.Product;
 import com.viet.aodai.product.repository.InventoryRepository;
-import com.viet.aodai.product.repository.productRepository;
+import com.viet.aodai.product.repository.ProductRepository;
 import com.viet.aodai.user.domain.entity.User;
 import com.viet.aodai.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -37,7 +37,7 @@ import java.util.HashSet;
 @RequiredArgsConstructor
 @Slf4j
 public class OrderCreationServiceImpl implements OrderCreationService {
-    private final productRepository productRepository;
+    private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;

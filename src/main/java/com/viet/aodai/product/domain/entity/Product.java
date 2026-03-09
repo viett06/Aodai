@@ -28,6 +28,8 @@ public class Product {
     private String description;
     @Column(nullable = false, length = 100)
     private String brand;
+    @Column(nullable = false)
+    private String image;
     @Column(nullable = false, precision = 10, scale = 2)
     @Positive
     private BigDecimal price;
@@ -51,6 +53,9 @@ public class Product {
 
     @OneToMany(mappedBy = "product")
     private Set<OrderItem> orderItems;
+
+    @OneToOne(mappedBy = "product")
+    private Inventory inventory;
 
     @PrePersist
     protected void onCreate() {

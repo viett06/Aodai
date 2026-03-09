@@ -1,5 +1,7 @@
 package com.viet.aodai.auth.controller;
 
+import com.viet.aodai.auth.domain.dto.CompleteForgotPasswordRequest;
+import com.viet.aodai.auth.domain.dto.ForgotPasswordRequest;
 import com.viet.aodai.auth.domain.request.LoginRequest;
 import com.viet.aodai.auth.domain.request.SelectMfaRequest;
 import com.viet.aodai.auth.domain.request.VerifyMfaRequest;

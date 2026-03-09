@@ -2,7 +2,15 @@ package com.viet.aodai.order.domain.mapper;
 
 import com.viet.aodai.order.domain.entity.OrderItem;
 import com.viet.aodai.order.domain.response.OrderItemResponse;
+import lombok.*;
+import org.springframework.stereotype.Component;
 
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Component
 public class OrderItemMapper {
     public static OrderItemResponse toOrderItemResponse(OrderItem orderItem){
         return OrderItemResponse.builder()

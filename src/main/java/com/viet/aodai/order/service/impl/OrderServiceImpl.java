@@ -197,16 +197,6 @@ public class OrderServiceImpl implements OrderService {
                 orderId, newOrderStatus, newPaymentStatus);
     }
 
-    @Override
-    @Transactional
-    public void handlePaymentWebhook(Long paymentId, PaymentStatus newPaymentStatus) {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new AuthException("Payment not found"));
-
-        orderProcessor.processPaymentResult(payment, newPaymentStatus);
-
-        log.info("Payment webhook processed: {} -> {}", paymentId, newPaymentStatus);
-    }
 
     @Override
     @Transactional

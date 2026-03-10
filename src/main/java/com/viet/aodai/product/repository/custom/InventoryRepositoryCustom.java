@@ -1,4 +1,4 @@
 package com.viet.aodai.product.repository.custom;
 
-public class InventoryRepositoryCustom {
+public interface InventoryRepositoryCustom {
 }

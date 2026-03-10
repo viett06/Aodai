@@ -1,6 +1,5 @@
 package com.viet.aodai.product.repository.custom;
 
-import com.viet.aodai.product.repository.impl.CategoryRepositoryImpl;
+public interface CategoryRepositoryCustom {
 
-public class CategoryRepositoryCustom implements CategoryRepositoryImpl {
 }

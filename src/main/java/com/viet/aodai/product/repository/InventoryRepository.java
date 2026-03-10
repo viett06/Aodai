@@ -1,8 +1,7 @@
 package com.viet.aodai.product.repository;
 
 import com.viet.aodai.product.domain.entity.Inventory;
-import com.viet.aodai.product.domain.entity.Product;
-import com.viet.aodai.product.repository.impl.InventoryRepositoryImpl;
+import com.viet.aodai.product.repository.custom.InventoryRepositoryCustom;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface InventoryRepository extends JpaRepository<Inventory,Long>, InventoryRepositoryImpl {
+public interface InventoryRepository extends JpaRepository<Inventory,Long>, InventoryRepositoryCustom {
 
     @Query(
             value = """

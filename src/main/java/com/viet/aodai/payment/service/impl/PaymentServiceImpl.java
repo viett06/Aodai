@@ -5,6 +5,7 @@ import com.viet.aodai.order.domain.entity.Order;
 import com.viet.aodai.order.domain.enumeration.OrderStatus;
 import com.viet.aodai.order.repository.OrderHistoryRepository;
 import com.viet.aodai.order.repository.OrderRepository;
+import com.viet.aodai.order.service.OrderProcessor;
 import com.viet.aodai.order.service.OrderService;
 import com.viet.aodai.payment.domain.entity.Payment;
 import com.viet.aodai.payment.domain.enumeration.PaymentMethod;
@@ -28,22 +29,23 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
-    private final OrderService orderService; // update order status
+    private final OrderProcessor orderProcessor;
+//    private final OrderService orderService; // update order status
     private final OrderHistoryRepository orderHistoryRepository;
     private final Map<PaymentMethod, PaymentGatewayHandler> handlers;
 
     public PaymentServiceImpl(PaymentRepository paymentRepository,
-                              OrderService orderService,
+                              OrderProcessor orderProcessor,
                               OrderRepository orderRepository,
                               OrderHistoryRepository orderHistoryRepository,
                               List<PaymentGatewayHandler> handlerList) {
         this.paymentRepository = paymentRepository;
-        this.orderService = orderService;
+//        this.orderService = orderService;
+        this.orderProcessor = orderProcessor;
         this.orderRepository = orderRepository;
         this.orderHistoryRepository = orderHistoryRepository;
         this.handlers = handlerList.stream()
@@ -127,7 +129,7 @@ public class PaymentServiceImpl implements PaymentService {
         //updatePaymentFromWebhook(payment, result);
 
         // Notify order service about payment result
-        orderService.handlePaymentWebhook(payment.getId(), result.getNewStatus());
+        handlePaymentWebhook(payment.getId(), result.getNewStatus());
 
         log.info("Webhook processed for payment: {}", payment.getId());
     }
@@ -147,7 +149,7 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRepository.save(payment);
 
         // Notify order service
-        orderService.handlePaymentWebhook(paymentId, PaymentStatus.COMPLETED);
+        handlePaymentWebhook(paymentId, PaymentStatus.COMPLETED);
 
         log.info("Payment {} manually confirmed by admin", paymentId);
     }
@@ -227,5 +229,17 @@ public class PaymentServiceImpl implements PaymentService {
     private boolean canBeConfirmedManually(PaymentMethod method) {
         return method == PaymentMethod.COD || method == PaymentMethod.BANK_TRANSFER;
     }
+
+    @Override
+    @Transactional
+    public void handlePaymentWebhook(Long paymentId, PaymentStatus newPaymentStatus) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new AuthException("Payment not found"));
+
+        orderProcessor.processPaymentResult(payment, newPaymentStatus);
+
+        log.info("Payment webhook processed: {} -> {}", paymentId, newPaymentStatus);
+    }
+
 
 }

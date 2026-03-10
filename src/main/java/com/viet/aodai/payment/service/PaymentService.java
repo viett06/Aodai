@@ -15,5 +15,6 @@ public interface PaymentService {
     void handleWebhook(String methodStr, Map<String, String> params);// methodStr để parse thành PaymentMethod
     void confirmPaymentManually(Long paymentId); // cho admin nếu webhook fail
     Payment findById(Long Id);
+    void handlePaymentWebhook(Long paymentId, PaymentStatus paymentStatus);
 
 }

@@ -17,6 +17,7 @@ import com.viet.aodai.product.repository.ProductRepository;
 import com.viet.aodai.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,9 +65,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductSearchResultDTO> searchProducts(ProductSearchRequestDTO requestDTO) {
+    public Page<ProductSearchResultDTO> searchProducts(ProductSearchRequestDTO requestDTO, Pageable pageable) {
         validatePriceRange(requestDTO);
-        return productRepository.searchProducts(requestDTO);
+        return productRepository.searchProducts(requestDTO, pageable);
     }
 
     private void validatePriceRange(ProductSearchRequestDTO req) {

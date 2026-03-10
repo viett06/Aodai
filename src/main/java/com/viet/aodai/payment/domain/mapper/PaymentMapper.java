@@ -8,8 +8,6 @@ import org.springframework.stereotype.Component;
 @Component
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
 public class PaymentMapper {
     public static PaymentResponse toPaymentResponse(Payment payment){

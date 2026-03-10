@@ -19,8 +19,11 @@ import org.springframework.web.filter.CorsFilter;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private static String[] PUBLIC_POST_ENDPOINTS = {""};
-    private static String[] PUBLIC_GET_ENDPOINTS ={""};
+    private static String[] PUBLIC_POST_ENDPOINTS = {
+            "/api/v1/auth/login",
+            "/api/v1/auth/forgot-password/initiate"
+    };
+    private static String[] PUBLIC_GET_ENDPOINTS ={};
 
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 

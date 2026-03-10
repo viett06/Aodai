@@ -5,10 +5,12 @@ import com.viet.aodai.auth.repository.custom.InvalidateAccessTokenRepositoryCust
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-public interface InvalidateAccessTokenRepository extends JpaRepository<String, InvalidateAccessToken>, InvalidateAccessTokenRepositoryCustom {
+@Repository
+public interface InvalidateAccessTokenRepository extends JpaRepository<InvalidateAccessToken, String>, InvalidateAccessTokenRepositoryCustom {
     @Query(
             value = """
                     INSERT INTO invalidate_tokens(token)
